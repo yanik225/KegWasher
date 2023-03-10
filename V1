@@ -1,34 +1,33 @@
 #include <TM1637Display.h>
-
-#define CLK 5
-#define DIO 6
+const int CLK = 5;
+const int DIO = 4;
 TM1637Display display(CLK, DIO);
 
 const int button1Pin = 2;
 const int button2Pin = 3;
-const int relayPin = 4;
+const int relayPin = 6;
 unsigned long startTime, timerDuration, elapsedTime;
-int relayOnTime = 10000, relayOffTime = 30000, blinkInterval = 500;
-int selectedTime = 10, blinkCount = 0;
+int relayOnTime = 10000, relayOffTime = 30000;
+int selectedTime = 10;
 
 void setup() {
   pinMode(button1Pin, INPUT_PULLUP);
   pinMode(button2Pin, INPUT_PULLUP);
   pinMode(relayPin, OUTPUT);
   display.setBrightness(7);
-  display.showNumberDec(selectedTime, true, 2, 0);
+  display.showNumberDec(selectedTime * 10, false, 2, 0);
 }
 
 void loop() {
   if (digitalRead(button1Pin) == LOW && elapsedTime == 0) {
     timerDuration = selectedTime * 60 * 1000;
     startTime = millis();
-    display.showNumberDec(selectedTime, true, 2, 0);
+    display.showNumberDec(selectedTime * 10, false, 2, 0);
   }
   elapsedTime = millis() - startTime;
   if (elapsedTime > timerDuration) {
     digitalWrite(relayPin, LOW);
-    display.showNumberDec(0, true);
+    display.showNumberDec(0, false, 2, 0);
     elapsedTime = 0;
   } else {
     if (elapsedTime % (relayOnTime + relayOffTime) < relayOnTime) {
@@ -36,26 +35,17 @@ void loop() {
     } else {
       digitalWrite(relayPin, LOW);
     }
-    display.showNumberDec((timerDuration - elapsedTime) / 1000, true, 2, 0);
-    if (elapsedTime == 0) {
-      blinkCount = 0;
-      display.setBrightness(7);
-    } else if (blinkCount < blinkInterval / 2) {
-      display.setBrightness(0);
-      blinkCount++;
-    } else if (blinkCount < blinkInterval) {
-      display.setBrightness(7);
-      blinkCount++;
-    } else {
-      blinkCount = 0;
-    }
+    display.showNumberDec((timerDuration - elapsedTime) / 1000, false, 2, 0);
   }
   if (digitalRead(button2Pin) == LOW) {
     selectedTime += 5;
     if (selectedTime > 15) {
       selectedTime = 5;
     }
-    display.showNumberDec(selectedTime, true, 2, 0);
+    display.showNumberDec(selectedTime * 10, false, 2, 0);
     delay(500);
+  }
+  if (elapsedTime == 0 && (millis() / 1000) % 2 == 0) {
+    display.showNumberDec(selectedTime * 10, false, 2, 0);
   }
 }
