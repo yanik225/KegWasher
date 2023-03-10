@@ -1,0 +1,63 @@
+#include <SevSeg.h>
+SevSeg sevseg;
+const int button1Pin = 2;
+const int button2Pin = 3;
+const int relayPin = 4;
+unsigned long startTime, timerDuration, elapsedTime;
+int relayOnTime = 10000, relayOffTime = 30000, blinkInterval = 500;
+int selectedTime = 10, blinkCount = 0;
+
+void setup() {
+  pinMode(button1Pin, INPUT_PULLUP);
+  pinMode(button2Pin, INPUT_PULLUP);
+  pinMode(relayPin, OUTPUT);
+  sevseg.begin(COMMON_ANODE, 4, 3, 5, 6, 7, 8, 9);
+  sevseg.setBrightness(100);
+  sevseg.setNumber(selectedTime * 100, 2);
+  sevseg.refreshDisplay();
+}
+
+void loop() {
+  if (digitalRead(button1Pin) == LOW && elapsedTime == 0) {
+    timerDuration = selectedTime * 60 * 1000;
+    startTime = millis();
+    sevseg.setNumber(selectedTime * 100, 2);
+    sevseg.refreshDisplay();
+  }
+  elapsedTime = millis() - startTime;
+  if (elapsedTime > timerDuration) {
+    digitalWrite(relayPin, LOW);
+    sevseg.setNumber(0);
+    sevseg.refreshDisplay();
+    elapsedTime = 0;
+  } else {
+    if (elapsedTime % (relayOnTime + relayOffTime) < relayOnTime) {
+      digitalWrite(relayPin, HIGH);
+    } else {
+      digitalWrite(relayPin, LOW);
+    }
+    sevseg.setNumber((timerDuration - elapsedTime) / 1000, 2);
+    if (elapsedTime == 0) {
+      blinkCount = 0;
+      sevseg.setBrightness(100);
+    } else if (blinkCount < blinkInterval / 2) {
+      sevseg.setBrightness(0);
+      blinkCount++;
+    } else if (blinkCount < blinkInterval) {
+      sevseg.setBrightness(100);
+      blinkCount++;
+    } else {
+      blinkCount = 0;
+    }
+    sevseg.refreshDisplay();
+  }
+  if (digitalRead(button2Pin) == LOW) {
+    selectedTime += 5;
+    if (selectedTime > 15) {
+      selectedTime = 5;
+    }
+    sevseg.setNumber(selectedTime * 100, 2);
+    sevseg.refreshDisplay();
+    delay(500);
+  }
+}
