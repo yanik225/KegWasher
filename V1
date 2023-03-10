@@ -1,5 +1,9 @@
-#include <SevSeg.h>
-SevSeg sevseg;
+#include <TM1637Display.h>
+
+#define CLK 5
+#define DIO 6
+TM1637Display display(CLK, DIO);
+
 const int button1Pin = 2;
 const int button2Pin = 3;
 const int relayPin = 4;
@@ -11,24 +15,20 @@ void setup() {
   pinMode(button1Pin, INPUT_PULLUP);
   pinMode(button2Pin, INPUT_PULLUP);
   pinMode(relayPin, OUTPUT);
-  sevseg.begin(COMMON_ANODE, 4, 3, 5, 6, 7, 8, 9);
-  sevseg.setBrightness(100);
-  sevseg.setNumber(selectedTime * 100, 2);
-  sevseg.refreshDisplay();
+  display.setBrightness(7);
+  display.showNumberDec(selectedTime, true, 2, 0);
 }
 
 void loop() {
   if (digitalRead(button1Pin) == LOW && elapsedTime == 0) {
     timerDuration = selectedTime * 60 * 1000;
     startTime = millis();
-    sevseg.setNumber(selectedTime * 100, 2);
-    sevseg.refreshDisplay();
+    display.showNumberDec(selectedTime, true, 2, 0);
   }
   elapsedTime = millis() - startTime;
   if (elapsedTime > timerDuration) {
     digitalWrite(relayPin, LOW);
-    sevseg.setNumber(0);
-    sevseg.refreshDisplay();
+    display.showNumberDec(0, true);
     elapsedTime = 0;
   } else {
     if (elapsedTime % (relayOnTime + relayOffTime) < relayOnTime) {
@@ -36,28 +36,26 @@ void loop() {
     } else {
       digitalWrite(relayPin, LOW);
     }
-    sevseg.setNumber((timerDuration - elapsedTime) / 1000, 2);
+    display.showNumberDec((timerDuration - elapsedTime) / 1000, true, 2, 0);
     if (elapsedTime == 0) {
       blinkCount = 0;
-      sevseg.setBrightness(100);
+      display.setBrightness(7);
     } else if (blinkCount < blinkInterval / 2) {
-      sevseg.setBrightness(0);
+      display.setBrightness(0);
       blinkCount++;
     } else if (blinkCount < blinkInterval) {
-      sevseg.setBrightness(100);
+      display.setBrightness(7);
       blinkCount++;
     } else {
       blinkCount = 0;
     }
-    sevseg.refreshDisplay();
   }
   if (digitalRead(button2Pin) == LOW) {
     selectedTime += 5;
     if (selectedTime > 15) {
       selectedTime = 5;
     }
-    sevseg.setNumber(selectedTime * 100, 2);
-    sevseg.refreshDisplay();
+    display.showNumberDec(selectedTime, true, 2, 0);
     delay(500);
   }
 }
